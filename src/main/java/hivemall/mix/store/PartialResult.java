@@ -36,6 +36,8 @@ public abstract class PartialResult {
     protected short totalClock;
 
     public PartialResult() {
+        this.minCovariance = 1.0f;
+        this.totalClock = 0;
         this.lock = new TTASLock();
     }
 
