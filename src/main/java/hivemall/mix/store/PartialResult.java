@@ -83,17 +83,12 @@ public abstract class PartialResult {
 
     protected abstract void accumulate(int minUpdates);
 
-    /**
-     * Weighting by exponential moving average.
-     * 
-     * http://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
-     */
     protected final void updateWeight(final float newValue) {
         final float oldWeight = weight;
         if(oldWeight == 0.f) {
             this.weight = newValue;
         } else {
-            this.weight = 0.3f * newValue + 0.7f * oldWeight;
+            this.weight = (newValue + oldWeight) / 2.f;
         }
     }
 
