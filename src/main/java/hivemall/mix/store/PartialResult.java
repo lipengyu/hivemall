@@ -27,6 +27,7 @@ import javax.annotation.Nonnegative;
 import javax.annotation.concurrent.GuardedBy;
 
 public abstract class PartialResult {
+    protected static final int ACCUMULATE_THRESHOLD = 100;
 
     private final Lock lock;
 
@@ -34,10 +35,13 @@ public abstract class PartialResult {
     protected float minCovariance;
     @GuardedBy("lock()")
     protected short totalClock;
+    @GuardedBy("lock()")
+    protected float weight;
 
     public PartialResult() {
         this.minCovariance = 1.0f;
         this.totalClock = 0;
+        this.weight = 0.f;
         this.lock = new TTASLock();
     }
 
@@ -50,8 +54,6 @@ public abstract class PartialResult {
     }
 
     public abstract void add(float localWeight, float covar, short clock, @Nonnegative int deltaUpdates);
-
-    public abstract float getWeight();
 
     public final float getMinCovariance() {
         return minCovariance;
@@ -72,6 +74,27 @@ public abstract class PartialResult {
     public final int diffClock(short clock) {
         short diff = (short) (totalClock - clock);
         return diff < 0 ? -diff : diff;
+    }
+
+    public final float getWeight() {
+        accumulate();
+        return weight;
+    }
+
+    protected abstract void accumulate();
+
+    /**
+     * Weighting by exponential moving average.
+     * 
+     * http://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
+     */
+    protected final void updateWeight(final float newValue) {
+        final float oldWeight = weight;
+        if(oldWeight == 0.f) {
+            this.weight = newValue;
+        } else {
+            this.weight = 0.3f * newValue + 0.7f * oldWeight;
+        }
     }
 
 }

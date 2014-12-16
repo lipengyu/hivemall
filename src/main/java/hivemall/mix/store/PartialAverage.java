@@ -27,7 +27,7 @@ public final class PartialAverage extends PartialResult {
     public static final float DEFAULT_SCALE = 10;
 
     private final float scale;
-    
+
     @GuardedBy("lock()")
     private float scaledSumWeights;
     @GuardedBy("lock()")
@@ -52,14 +52,23 @@ public final class PartialAverage extends PartialResult {
     }
 
     protected void addWeight(float localWeight, int deltaUpdates) {
-        scaledSumWeights += ((localWeight / scale) * deltaUpdates);
-        totalUpdates += deltaUpdates; // not deltaUpdates is in range (0,127]
+        assert (deltaUpdates >= 1) : deltaUpdates;
+        this.scaledSumWeights += ((localWeight / scale) * deltaUpdates);
+        this.totalUpdates += deltaUpdates; // note deltaUpdates is in range (0,127]
         assert (totalUpdates > 0) : totalUpdates;
+        if(totalUpdates >= ACCUMULATE_THRESHOLD) {
+            accumulate();
+        }
     }
 
     @Override
-    public float getWeight() {
-        return (scaledSumWeights / totalUpdates) * scale;
+    protected void accumulate() {
+        if(totalUpdates > 0) {
+            float value = (scaledSumWeights / totalUpdates) * scale;
+            updateWeight(value);
+            this.scaledSumWeights = 0.f;
+            this.totalUpdates = 0;
+        }
     }
 
 }

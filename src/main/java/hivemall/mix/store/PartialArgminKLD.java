@@ -31,6 +31,8 @@ public final class PartialArgminKLD extends PartialResult {
     private float sum_mean_div_covar;
     @GuardedBy("lock()")
     private float sum_inv_covar;
+    @GuardedBy("lock()")
+    private short totalUpdates;
 
     public PartialArgminKLD() {
         this(1.f); // no scaling
@@ -45,19 +47,31 @@ public final class PartialArgminKLD extends PartialResult {
 
     @Override
     public void add(float localWeight, float covar, short clock, int deltaUpdates) {
-        addWeight(localWeight, covar);
+        addWeight(localWeight, covar, deltaUpdates);
         setMinCovariance(covar);
         incrClock(clock);
     }
 
-    protected void addWeight(float localWeight, float covar) {
+    protected void addWeight(float localWeight, float covar, int deltaUpdates) {
+        assert (deltaUpdates >= 1) : deltaUpdates;
         this.sum_mean_div_covar += (localWeight / covar) / scale;
         this.sum_inv_covar += (1.f / covar) / scale;
+        this.totalUpdates += deltaUpdates; // note deltaUpdates is in range (0,127]
+        assert (totalUpdates > 0) : totalUpdates;
+        if(totalUpdates >= ACCUMULATE_THRESHOLD) {
+            accumulate();
+        }
     }
 
     @Override
-    public float getWeight() {
-        return sum_mean_div_covar / sum_inv_covar;
+    protected void accumulate() {
+        if(totalUpdates > 0) {
+            float value = sum_mean_div_covar / sum_inv_covar;
+            updateWeight(value);
+            this.sum_mean_div_covar = 0.f;
+            this.sum_inv_covar = 0.f;
+            this.totalUpdates = 0;
+        }
     }
 
 }
