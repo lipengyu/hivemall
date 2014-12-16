@@ -56,7 +56,7 @@ public abstract class PartialResult {
     }
 
     protected final void setMinCovariance(float covar) {
-        this.minCovariance = Math.max(minCovariance, covar);
+        this.minCovariance = Math.min(minCovariance, covar);
     }
 
     public final short getClock() {
