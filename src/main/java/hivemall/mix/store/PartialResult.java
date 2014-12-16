@@ -77,11 +77,11 @@ public abstract class PartialResult {
     }
 
     public final float getWeight() {
-        accumulate();
+        accumulate(1);
         return weight;
     }
 
-    protected abstract void accumulate();
+    protected abstract void accumulate(int minUpdates);
 
     /**
      * Weighting by exponential moving average.

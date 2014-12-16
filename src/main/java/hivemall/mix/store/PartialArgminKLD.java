@@ -58,14 +58,12 @@ public final class PartialArgminKLD extends PartialResult {
         this.sum_inv_covar += (1.f / covar) / scale;
         this.totalUpdates += deltaUpdates; // note deltaUpdates is in range (0,127]
         assert (totalUpdates > 0) : totalUpdates;
-        if(totalUpdates >= ACCUMULATE_THRESHOLD) {
-            accumulate();
-        }
+        accumulate(ACCUMULATE_THRESHOLD);
     }
 
     @Override
-    protected void accumulate() {
-        if(totalUpdates > 0) {
+    protected void accumulate(int minUpdates) {
+        if(totalUpdates >= minUpdates) {
             float value = sum_mean_div_covar / sum_inv_covar;
             updateWeight(value);
             this.sum_mean_div_covar = 0.f;

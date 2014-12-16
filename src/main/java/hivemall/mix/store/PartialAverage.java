@@ -56,14 +56,12 @@ public final class PartialAverage extends PartialResult {
         this.scaledSumWeights += ((localWeight / scale) * deltaUpdates);
         this.totalUpdates += deltaUpdates; // note deltaUpdates is in range (0,127]
         assert (totalUpdates > 0) : totalUpdates;
-        if(totalUpdates >= ACCUMULATE_THRESHOLD) {
-            accumulate();
-        }
+        accumulate(ACCUMULATE_THRESHOLD);
     }
 
     @Override
-    protected void accumulate() {
-        if(totalUpdates > 0) {
+    protected void accumulate(int minUpdates) {
+        if(totalUpdates >= minUpdates) {
             float value = (scaledSumWeights / totalUpdates) * scale;
             updateWeight(value);
             this.scaledSumWeights = 0.f;
